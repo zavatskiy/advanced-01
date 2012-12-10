@@ -1,6 +1,7 @@
 import time
 import socket
 
+from pkt import Packet, CONNECT, PING, PINGD, ACKQUIT, ACKFINISH
 from work.helpers import make_message, parse_message
 
 
@@ -22,22 +23,29 @@ class Client01:
 
 
 if __name__ == '__main__':
-    client = Client01()
-    client.send('connect', 'HELLO')
-    ans = client.recive()
+    pkt = Packet(command=CONNECT)
+    print(pkt.pack())
+    #client = Client01()
+    #client.send('connect', 'HELLO')
+    #ans = client.recive()
 
-    print '> '.join([ans[0], ans[1]])
+    #client.send('finish')
+    #ans = client.recive()
 
-    while True:
-        data = raw_input('pingd> ')
-        client.send('pingd', data)
+    #exit()
 
-        ans = client.recive()
-        if not ans[0]:
-            client.close()
-        if ans[0] in ['ackquit', 'ackfinish']:
-            break
+    #print '> '.join([ans[0], ans[1]])
 
-        print '> '.join([ans[0], ans[1]])
+    #while True:
+        #data = raw_input('pingd> ')
+        #client.send('pingd', data)
 
-    client.close()
+        #ans = client.recive()
+        #if not ans[0]:
+            #client.close()
+        #if ans[0] in ['ackquit', 'ackfinish']:
+            #break
+
+        #print '> '.join([ans[0], ans[1]])
+
+    #client.close()
