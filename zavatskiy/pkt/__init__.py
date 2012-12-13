@@ -1,3 +1,5 @@
+from collections import OrderedDict
+
 CONNECT = 1
 PING = 2
 PINGD = 3
@@ -8,8 +10,14 @@ class Field:
     def set_name(self, name):
         self.name = name
 
+    def __get__(self, obj, owner):
+        return obj.__dict__[self.name]
 
-class RegCmds(dict):
+    def __set__(self, obj, value):
+        obj.__dict__[self.name] = value
+
+
+class RegCmds(OrderedDict):
     def __init__(self, bases):
         super().__init__()
         self.fields = {}
@@ -36,11 +44,10 @@ class MetaPacket(type):
 
 class Packet(metaclass=MetaPacket):
     def __init__(self, **kwargs):
-        for k, v in kwargs.items():
-            setattr(self, k, v)
+        pass
 
     def pack(self):
-        return bytes(self.command, 'utf-8')
+        pass
 
     @classmethod
     def unpack(cls, data):
@@ -63,10 +70,7 @@ class Int(Field):
 
 
 class Feeder:
-    def __get__(self, instance, owner):
-        pass
-    def __set__(self, instance, value):
-        pass
+    pass
 
 
 class Connect(Packet):
@@ -90,4 +94,3 @@ class AckQuit(Packet):
 class AckFinish(Packet):
     cmd = Cmd(ACKFINISH)
     data = Str(maxsize=256)
-
