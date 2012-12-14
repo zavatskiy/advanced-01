@@ -3,8 +3,15 @@ from collections import OrderedDict
 CONNECT = 1
 PING = 2
 PINGD = 3
-ACKQUIT = 4
-ACKFINISH = 5
+QUIT = 4
+FINISH = 5
+
+CONNECTED = 6
+PONG = 7
+PONGD = 8
+ACKQUIT = 9
+ACKFINISH = 10
+
 
 class Field:
     def set_name(self, name):
@@ -82,18 +89,17 @@ class Str(Field):
 
 class Int(Field):
     """ Integer field """
-    def __init__(self, maxsize):
-        self.maxsize = maxsize
 
 
 class Feeder:
     """ Collect incoming bytes """
-    def __init__(self, conn):
-        self.conn = conn
+    def __init__(self, socket):
+        self.socket = socket
+        self.pkt_len = 0
 
     def feed(self, buf):
-        buf += self.conn.recv(1024)
-        if not self.pkt_len and len(buf) > 3:
+        buf += self.socket.recv(1024)
+        if not self.pkt_len and len(buf) >= 4:
             buf = self._cut_pkt_len(buf)
         if self.pkt_len and len(buf) >= self.pkt_len:
             return Feeder2.get_pkt(buf)
@@ -108,25 +114,44 @@ class Feeder:
 class Feeder2:
     """ Construct Packet from bytes """
     @staticmethod
-    def get_pkt(self, buf):
+    def get_pkt(buf):
         p = Packet.unpack(buf)
         return p.cmd, buf
+
+
+class Connected(Packet):
+    """ Connected command """
+    cmd = Cmd(CONNECTED)
 
 
 class Connect(Packet):
     """ Connect command """
     cmd = Cmd(CONNECT)
+    ans = Connected
+
+
+class Pong(Packet):
+    """ Pong command """
+    cmd = Cmd(PONG)
 
 
 class Ping(Packet):
     """ Ping command """
     cmd = Cmd(PING)
+    ans = Pong
+
+
+class PongD(Packet):
+    """ PongD command """
+    cmd = Cmd(PONGD)
+    data = Str(maxsize=256)
 
 
 class PingD(Packet):
     """ PingD command """
     cmd = Cmd(PINGD)
     data = Str(maxsize=256)
+    ans = PongD
 
 
 class AckQuit(Packet):
@@ -135,7 +160,21 @@ class AckQuit(Packet):
     data = Str(maxsize=256)
 
 
+class Quit(Packet):
+    """ Quit command """
+    cmd = Cmd(QUIT)
+    data = Str(maxsize=256)
+    ans = AckQuit
+
+
 class AckFinish(Packet):
     """ AckFinish command """
     cmd = Cmd(ACKFINISH)
     data = Str(maxsize=256)
+
+
+class Finish(Packet):
+    """ Finish command """
+    cmd = Cmd(FINISH)
+    data = Str(maxsize=256)
+    ans = AckFinish

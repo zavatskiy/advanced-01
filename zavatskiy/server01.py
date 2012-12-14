@@ -1,6 +1,8 @@
 import socket
 import threading
 
+import pkt
+
 from work.helpers import make_message, parse_message
 
 class Server01:
@@ -22,33 +24,36 @@ class Server01:
 
     def handle_request(self, conn, addr):
         """ Handler request """
+        conn.settimeout(5)
+
+        feeder = pkt.Feeder(conn)
+        buf = b''
+
         while not self.__shutdown:
-            conn.settimeout(5)
             try:
-                message = parse_message(conn.recv)
-                if not message:
-                    break
-                command, data = message
+                cmd = None
+                while not cmd:
+                    cmd, buf = feeder.feed(buf)
             except socket.timeout:
                 break
 
-            if command == 'connect':
-                conn.sendall(make_message('connected', 'HELLO'))
-            elif command == 'ping':
-                conn.sendall(make_message('pong'))
-            elif command == 'pingd':
-                conn.sendall(make_message('pongd', data))
-            elif command == 'quit':
-                conn.sendall(make_message('ackquit', data))
-                break
-            elif command == 'finish':
-                conn.sendall(make_message('ackfinish', data))
-                self.__shutdown = True
-                raise socket.timeout
-                break
+            #if command == 'connect':
+                #conn.sendall(make_message('connected', 'HELLO'))
+            #elif command == 'ping':
+                #conn.sendall(make_message('pong'))
+            #elif command == 'pingd':
+                #conn.sendall(make_message('pongd', data))
+            #elif command == 'quit':
+                #conn.sendall(make_message('ackquit', data))
+                #break
+            #elif command == 'finish':
+                #conn.sendall(make_message('ackfinish', data))
+                #self.__shutdown = True
+                #raise socket.timeout
+                #break
 
-        if self.__shutdown:
-            conn.sendall(make_message('ackfinish'))
+        #if self.__shutdown:
+            #conn.sendall(make_message('ackfinish'))
 
         conn.close()
 

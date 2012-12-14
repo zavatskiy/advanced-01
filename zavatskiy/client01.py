@@ -11,30 +11,39 @@ class Client01:
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.connect((host, port))
 
-    def send(self, command, message=''):
-        self.socket.sendall(make_message(command, message))
+    def send(self, data):
+        self.socket.sendall(data)
 
     def recive(self):
-        message = parse_message(self.socket.recv)
-        return message
+        buf = b''
+        feeder = pkt.Feeder(self.socket)
+        cmd = None
+        while not cmd:
+            cmd, buf = feeder.feed(buf)
+        return cmd, buf
 
     def close(self):
         self.socket.close()
 
 
 if __name__ == '__main__':
-    #print '> '.join([ans[0], ans[1]])
 
-    #while True:
-        #data = raw_input('pingd> ')
-        #client.send('pingd', data)
+    client = Client01()
+    client.send(pkt.Connect().pack())
+    ans = client.recive()
 
-        #ans = client.recive()
-        #if not ans[0]:
-            #client.close()
-        #if ans[0] in ['ackquit', 'ackfinish']:
-            #break
+    print('> '.join([ans[0], ans[1]]))
 
-        #print '> '.join([ans[0], ans[1]])
+    while True:
+        data = raw_input('pingd> ')
+        client.send(pkt.PingD(data).pack())
 
-    #client.close()
+        ans = client.recive()
+        if not ans[0]:
+            client.close()
+        if ans[0] in ['ackquit', 'ackfinish']:
+            break
+
+        print('> '.join([ans[0], ans[1]]))
+
+    client.close()
