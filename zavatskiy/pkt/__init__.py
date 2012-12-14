@@ -67,9 +67,10 @@ class Packet(metaclass=MetaPacket):
 
     @classmethod
     def unpack(cls, data):
+        #: TODO Return cmd obj
         data = data.decode('utf-8')
         obj = cls()
-        obj.cmd = data[0]
+        obj.cmd = int(data[0])
         if data[1:]:
             obj.data = data[1:]
         return obj
