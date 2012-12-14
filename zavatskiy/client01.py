@@ -1,7 +1,7 @@
 import time
 import socket
 
-from pkt import Packet, CONNECT, PING, PINGD, ACKQUIT, ACKFINISH
+import pkt
 from work.helpers import make_message, parse_message
 
 
@@ -23,17 +23,6 @@ class Client01:
 
 
 if __name__ == '__main__':
-    pkt = Packet(command=CONNECT)
-    print(pkt.pack())
-    #client = Client01()
-    #client.send('connect', 'HELLO')
-    #ans = client.recive()
-
-    #client.send('finish')
-    #ans = client.recive()
-
-    #exit()
-
     #print '> '.join([ans[0], ans[1]])
 
     #while True:
