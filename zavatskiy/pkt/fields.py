@@ -1,5 +1,7 @@
 class Field:
     def __get__(self, obj, owner):
+        if obj is None:
+            return obj
         return obj.__dict__[self.name]
 
     def __set__(self, obj, value):
