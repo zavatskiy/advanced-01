@@ -12,12 +12,12 @@ suite01.addTest(TestClient01('test_finish'))
 
 suite02 = unittest.TestSuite()
 suite02.addTest(TestPkt('test_connect_cmd'))
-suite02.addTest(TestPkt('test_connect_pack'))
-suite02.addTest(TestPkt('test_connect_unpack'))
-suite02.addTest(TestPkt('test_ping'))
-suite02.addTest(TestPkt('test_pingd'))
-suite02.addTest(TestPkt('test_quit'))
-suite02.addTest(TestPkt('test_finish'))
+#suite02.addTest(TestPkt('test_connect_pack'))
+#suite02.addTest(TestPkt('test_connect_unpack'))
+#suite02.addTest(TestPkt('test_ping'))
+#suite02.addTest(TestPkt('test_pingd'))
+#suite02.addTest(TestPkt('test_quit'))
+#suite02.addTest(TestPkt('test_finish'))
 
 if __name__ == '__main__':
     #unittest.TextTestRunner().run(suite01)

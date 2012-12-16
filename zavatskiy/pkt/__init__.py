@@ -1,62 +1,45 @@
 from collections import OrderedDict
 
-CONNECT = 1
-PING = 2
-PINGD = 3
-QUIT = 4
-FINISH = 5
+from .fields import Field, Cmd, Str
 
-CONNECTED = 6
-PONG = 7
-PONGD = 8
-ACKQUIT = 9
-ACKFINISH = 10
+CONNECT = 0
+PING = 1
+PINGD = 2
+QUIT = 3
+FINISH = 4
 
-
-class Field:
-    def set_name(self, name):
-        self.name = name
-
-    def __get__(self, obj, owner):
-        return obj.__dict__[self.name]
-
-    def __set__(self, obj, value):
-        obj.__dict__[self.name] = value
-
-
-class RegCmds(OrderedDict):
-    def __init__(self, bases):
-        super().__init__()
-        self.fields = {}
-        for b in bases:
-            if issubclass(b, Packet):
-                self.fields.update(b._fields_)
-
-    def __setitem__(self, key, val):
-        super().__setitem__(key, val)
-        if isinstance(val, Field):
-            val.set_name(key)
-            self.fields[key] = val
+CONNECTED = 5
+PONG = 6
+PONGD = 7
+ACKQUIT = 8
+ACKFINISH = 9
 
 
 class MetaPacket(type):
+    cmds = dict()
     @classmethod
     def __prepare__(cls, name, bases):
-        return RegCmds(bases)
+        return OrderedDict()
 
     def __init__(cls, name, bases, dct):
         type.__init__(cls, name, bases, dct)
-        cls._fields_ = dct.fields
+        cls.fields = OrderedDict()
+        for k, v in dct.items():
+            if isinstance(v, Cmd):
+                cls.cmds[v.cmd] = cls
+            if isinstance(v, Field):
+                v.name = k
+                cls.fields[k] = v
 
 
 class Packet(metaclass=MetaPacket):
     """ Pack package to bytes and unpack bytes to package """
     def __init__(self, **kwargs):
-        for k in list(self._fields_.keys()):
-            if k == 'cmd':
-                setattr(self, 'cmd', self._fields_['cmd'].cmd)
-            else:
-                setattr(self, k, kwargs.get(k))
+        setattr(self,
+                self.fields.keys()[0],
+                self.fields.values()[0])
+        for k, v in self.fields[1:]:
+            setattr(self, k, kwargs.get(k))
 
     def pack(self):
         p = b''
@@ -70,26 +53,11 @@ class Packet(metaclass=MetaPacket):
         #: TODO Return cmd obj
         data = data.decode('utf-8')
         obj = cls()
+        print(cls)
         obj.cmd = int(data[0])
         if data[1:]:
             obj.data = data[1:]
         return obj
-
-
-class Cmd(Field):
-    """ Command field """
-    def __init__(self, cmd):
-        self.cmd = cmd
-
-
-class Str(Field):
-    """ String field """
-    def __init__(self, maxsize):
-        self.maxsize = maxsize
-
-
-class Int(Field):
-    """ Integer field """
 
 
 class Feeder:
