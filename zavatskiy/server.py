@@ -34,7 +34,7 @@ class Server:
             try:
                 cmd = None
                 while not cmd:
-                    cmd, buf = feeder.feed(buf)
+                    cmd, buf = feeder.feed(conn)
             except socket.timeout:
                 break
 
