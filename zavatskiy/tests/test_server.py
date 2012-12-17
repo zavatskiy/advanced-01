@@ -1,13 +1,13 @@
 import unittest
 
-from server01 import Server01
-from client01 import Client01
+from server import Server
+from client import Client
 
 
-class TestClient01(unittest.TestCase):
+class TestServer(unittest.TestCase):
 
     def setUp(self):
-        self.client = Client01()
+        self.client = Client()
 
     def tearDown(self):
         self.client.close()

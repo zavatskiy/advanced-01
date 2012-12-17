@@ -5,7 +5,8 @@ import pkt
 
 from work.helpers import make_message, parse_message
 
-class Server01:
+class Server:
+    """Simple blocking server."""
 
     def __init__(self, host='127.0.0.1', port=6666, max_queue=1):
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -17,13 +18,13 @@ class Server01:
         self.__shutdown = False
 
     def new_stream(self, conn, addr):
-        """ Make thread for each client """
+        """Make thread for each client."""
         t = threading.Thread(target=self.handle_request, args=(conn, addr))
         t.start()
         self.threads.append(t)
 
     def handle_request(self, conn, addr):
-        """ Handler request """
+        """Handler request."""
         conn.settimeout(5)
 
         feeder = pkt.Feeder(conn)
@@ -58,7 +59,7 @@ class Server01:
         conn.close()
 
     def serve(self):
-        """ Run server """
+        """Run server."""
         while not self.__shutdown:
             try:
                 conn, addr = self.socket.accept()
@@ -71,7 +72,7 @@ class Server01:
         self.shutdown()
 
     def shutdown(self):
-        """ Shutdown server """
+        """Shutdown server."""
         for thread in self.threads:
             thread.join()
 
@@ -79,6 +80,5 @@ class Server01:
 
 
 if __name__ == '__main__':
-
-    server = Server01()
+    server = Server()
     server.serve()

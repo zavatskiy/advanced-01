@@ -5,11 +5,27 @@ import pkt
 
 class TestPkt(unittest.TestCase):
 
-    def test_not_cmd(self):
-        pass
+    def test_wrong_cmd(self):
+        with self.assertRaises(AttributeError):
+            pkt.Empty()
 
     def test_reg_cmds(self):
-        pass
+        self.assertTrue(pkt.Connect in pkt.MetaPacket.cmds.values())
+        self.assertTrue(pkt.Ping in pkt.MetaPacket.cmds.values())
+        self.assertTrue(pkt.PingD in pkt.MetaPacket.cmds.values())
+        self.assertTrue(pkt.Quit in pkt.MetaPacket.cmds.values())
+        self.assertTrue(pkt.QuitD in pkt.MetaPacket.cmds.values())
+        self.assertTrue(pkt.Finish in pkt.MetaPacket.cmds.values())
+
+    def test_not_cmd(self):
+        with self.assertRaises(AssertionError):
+            class NotCmd(pkt.Packet):
+                data = pkt.Str(maxsize=255)
+
+    def test_duble_cmd(self):
+        with self.assertRaises(AssertionError):
+            class DubleConnect(pkt.Packet):
+                cmd = pkt.Cmd(pkt.CONNECT)
 
     def test_connect_cmd(self):
         p = pkt.Connect()
@@ -72,12 +88,12 @@ class TestPkt(unittest.TestCase):
 
     def test_quitd_pack(self):
         quitd = pkt.QuitD(data='QUIT')
-        self.assertEqual(b'\x00\x00\x00\x015', quit.pack())
+        self.assertEqual(b'\x00\x00\x00\x055QUIT', quitd.pack())
 
     def test_quitd_unpack(self):
         p = pkt.Packet.unpack(b'5QUIT')
         self.assertEqual(pkt.QUITD, p.cmd)
-        self.assertEqual(b'QUIT', p.data)
+        self.assertEqual('QUIT', p.data)
         self.assertEqual(pkt.QuitD, type(p))
 
     def test_finish_cmd(self):

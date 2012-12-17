@@ -18,36 +18,50 @@ ACKFINISH = 12
 
 
 class MetaPacket(type):
+    """Register commands.
+
+    Checks for compliance with the order of the fields and
+    the lack of a required field.
+    """
+
     cmds = dict()
     @classmethod
     def __prepare__(cls, name, bases):
         return OrderedDict()
 
     def __init__(cls, name, bases, dct):
-        type.__init__(cls, name, bases, dct)
-        cls.fields = OrderedDict()
-        cmd = False
-        for k, v in dct.items():
-            if isinstance(v, Cmd):
-                cls.cmds[v.cmd] = cls
-                cmd = True
-            if isinstance(v, Field):
-                v.name = k
-                cls.fields[k] = v
+        if cls.__name__ != 'Packet':
+            type.__init__(cls, name, bases, dct)
+            cls.fields = OrderedDict()
+            cmd = False
+            for k, v in dct.items():
+                if isinstance(v, Cmd):
+                    assert v.cmd not in list(cls.cmds.keys()), 'Command repeat.'
+                    cls.cmds[v.cmd] = cls
+                    cmd = True
+                if isinstance(v, Field):
+                    v.name = k
+                    cls.fields[k] = v
 
-        if not cmd:
-            assert cmd, 'Not exists'
+            if not cmd:
+                assert cmd, 'Command not exists.'
+
+            assert isinstance(list(cls.fields.values())[0], Cmd), (
+                'Command must be the first argument.')
 
 
 class Packet(metaclass=MetaPacket):
-    """ Pack package to bytes and unpack bytes to package """
+    """Abstract handler.
+
+    Pack fields to bytes. Unpack bytes to packet."""
+
     def __init__(self, **kwargs):
         setattr(self, 'cmd', list(self.fields.values())[0].cmd)
         for k in list(self.fields)[1:]:
             setattr(self, k, kwargs.get(k))
 
-
     def pack(self):
+        """Pack fields to bytes."""
         p = b''
         for k, v in self.fields.items():
             p += str(getattr(self, k)).encode('utf-8')
@@ -56,6 +70,7 @@ class Packet(metaclass=MetaPacket):
 
     @classmethod
     def unpack(cls, data):
+        """Unpack bytes to packet."""
         data = data.decode('utf-8')
         cmd = cls.cmds.get(int(data[0]))
 
@@ -66,12 +81,17 @@ class Packet(metaclass=MetaPacket):
 
 
 class Feeder:
-    """ Collect incoming bytes """
+    """Collect incoming bytes.
+
+    Gets a chunk of incoming buffer.
+    """
+
     def __init__(self, socket):
         self.socket = socket
         self.pkt_len = 0
 
     def feed(self, buf):
+        """Process incoming bytes."""
         buf += self.socket.recv(1024)
         if not self.pkt_len and len(buf) >= 4:
             buf = self._cut_pkt_len(buf)
@@ -81,12 +101,14 @@ class Feeder:
             return None, buf
 
     def _cut_pkt_len(self, buf):
+        """Store buffer length and return only data in buffer."""
         self.pkt_len = int.from_bytes(buf[:4], byteorder='big')
         return buf[4:]
 
 
 class Feeder2:
     """ Construct Packet from bytes """
+
     @staticmethod
     def get_pkt(buf):
         p = Packet.unpack(buf)
@@ -94,72 +116,84 @@ class Feeder2:
 
 
 class Connected(Packet):
-    """ Connected command """
+    """ Connected command."""
+
     cmd = Cmd(CONNECTED)
 
 
 class Connect(Packet):
-    """ Connect command """
+    """Connect command."""
+
     cmd = Cmd(CONNECT)
     ans = Connected
 
 
 class Pong(Packet):
-    """ Pong command """
+    """Pong command."""
+
     cmd = Cmd(PONG)
 
 
 class Ping(Packet):
-    """ Ping command """
+    """Ping command."""
+
     cmd = Cmd(PING)
     ans = Pong
 
 
 class PongD(Packet):
-    """ PongD command """
+    """PongD command."""
+
     cmd = Cmd(PONGD)
     data = Str(maxsize=256)
 
 
 class PingD(Packet):
-    """ PingD command """
+    """PingD command."""
+
     cmd = Cmd(PINGD)
     data = Str(maxsize=256)
     ans = PongD
 
 
 class AckQuit(Packet):
-    """ AckQuit command """
+    """AckQuit command."""
+
     cmd = Cmd(ACKQUIT)
     data = Str(maxsize=256)
 
 
 class Quit(Packet):
-    """ Quit command """
+    """Quit command."""
+
     cmd = Cmd(QUIT)
     ans = AckQuit
 
 
 class AckQuitD(Packet):
-    """ AckQuit command """
+    """AckQuit command."""
+
     cmd = Cmd(ACKQUITD)
     data = Str(maxsize=256)
 
 
 class QuitD(Packet):
-    """ Quit command """
+    """Quit command."""
+
     cmd = Cmd(QUITD)
     data = Str(maxsize=256)
     ans = AckQuitD
 
 
 class AckFinish(Packet):
-    """ AckFinish command """
+    """AckFinish command."""
+
     cmd = Cmd(ACKFINISH)
     data = Str(maxsize=256)
 
 
 class Finish(Packet):
-    """ Finish command """
+    """Finish command."""
+
     cmd = Cmd(FINISH)
     ans = AckFinish
