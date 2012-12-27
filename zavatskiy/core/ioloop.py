@@ -23,8 +23,20 @@ class IOLoop:
             for fd, ev in self.poller.poll():
                 handlers[fd](fd, ev)
 
-    def close(self, fd):
+    def run_once(self, timeout):
+        pass
+
+    def stop(self, fd):
         self.poller.unregister(fd)
+
+    def call_soon(self, cb, *args):
+        pass
+
+    def call_later(self, delay, cb, *args):
+        pass
+
+    def call_soon_threadsafe(self, cb, *args):
+        pass
 
     def handle(self, conn, addr, fd, ev):
         if ev in EPOLLIN:
